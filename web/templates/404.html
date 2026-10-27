@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Page not found</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <main>
+    <section class="card">
+      <h1>Page not found</h1>
+      <p>That address is not part of the OTP lab.</p>
+      <p><a href="{{ url_for('index') }}">Back to the demo</a></p>
+    </section>
+  </main>
+</body>
+</html>

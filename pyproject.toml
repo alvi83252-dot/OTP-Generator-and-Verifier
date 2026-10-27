@@ -1,0 +1,12 @@
+[project]
+name = "otp-generator-verifier"
+version = "1.0.0"
+description = "Classroom OTP generator and verifier with a 30-second time-bomb window"
+requires-python = ">=3.12"
+dependencies = [
+    "flask==3.1.2",
+]
+
+# Vercel loads this object. The console program is main.py and is not the website.
+[tool.vercel]
+entrypoint = "app:app"

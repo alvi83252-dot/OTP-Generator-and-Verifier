@@ -1,0 +1,157 @@
+OTP GENERATOR AND VERIFIER
+Example session (judgements come from otp.core)
+The live program redraws the bar; this file shows one frame at a time.
+The 60-second lock is waited out in the real program. It is not skipped.
+
+============================================================
+  OTP GENERATOR AND VERIFIER
+  Time-Bomb Auth
+============================================================
+Validity window : 30 seconds
+Late OTP entry  : locks input for 60 seconds
+Digits          : 6
+Generator       : secrets.randbelow (cryptographic RNG)
+Comparison      : hmac.compare_digest (timing-safe)
+============================================================
+  1  Demo OTP (random 6-digit time-bomb)
+  2  Time-based OTP (TOTP, RFC 6238)
+  3  Event-based OTP (HOTP, RFC 4226)
+  4  Sample test vectors
+  5  Quit
+------------------------------------------------------------
+Choose an option (1-5): hello
+
+Invalid choice. Enter a number from 1 to 5.
+
+Choose an option (1-5): 1
+
+New demo OTP issued.
+This code is shown only for the classroom demo.
+
+    OTP: 482913
+
+[##########################------]  25s remaining
+OTP> 482913
+
+SUCCESS
+The OTP matches and was entered inside the 30-second window.
+
+Choose an option (1-5): 1
+
+    OTP: 109284
+
+[###################-------------]  18s remaining
+OTP> 000000
+
+FAILURE
+That OTP does not match. You can try again while the window is still open.
+Attempt 1. 18s left in this window.
+
+[#################---------------]  16s remaining
+OTP> 12ab
+
+INVALID
+Enter exactly 6 digits (000000 to 999999). This was not counted as an attempt.
+This was not counted as an attempt.
+
+[##############------------------]  14s remaining
+OTP> 109284
+
+SUCCESS
+The OTP matches and was entered inside the 30-second window.
+
+Choose an option (1-5): 1
+
+    OTP: 550019
+
+OTP> n
+
+Previous code discarded. Generating a new OTP.
+
+    OTP: 771204
+
+(The bar runs down to 0. The late submit is the line below.)
+Window closed. Submitting an OTP now locks input.
+[--------------------------------]  EXPIRED
+OTP> 771204
+
+EXPIRED
+The submission is outside the 30-second window (second 31 or later). Input will lock for 60 seconds.
+
+****************************************************************
+* LOCKED                                                       *
+* The OTP was entered outside the validity window.             *
+* Input is disabled for 60 seconds.                            *
+* Ctrl+C still stops the program. OTP keys are ignored.        *
+****************************************************************
+LOCKED - input disabled. Typed keys are ignored.
+[################################]  60s remaining
+[###############################-]  59s remaining
+... the countdown continues once a second until it reaches 0 ...
+Lockout finished. Input is enabled again.
+
+Choose an option (1-5): 2
+
+Clock frozen at t=59 for this example.
+    TOTP: 287082
+Enter OTP (q = menu): 000000
+FAILURE
+That OTP does not match the previous, current, or next 30-second step.
+Enter OTP (q = menu): 287082
+SUCCESS
+The OTP matches a time step inside the +/- 1 step skew (30-second steps).
+
+Choose an option (1-5): 3
+
+    Counter: 0
+    HOTP:    755224
+Enter OTP (n = show again, q = menu): 000000
+FAILURE
+That OTP does not match this counter. The counter was not changed.
+Enter OTP (n = show again, q = menu): 755224
+SUCCESS
+The OTP matches the current counter.
+Counter advanced to 1.
+
+Choose an option (1-5): 4
+
+Kind     Hash     Detail                   Expected   Actual     Result
+-----------------------------------------------------------------------
+HOTP     sha1     counter 0                755224     755224     PASS
+HOTP     sha1     counter 1                287082     287082     PASS
+HOTP     sha1     counter 2                359152     359152     PASS
+HOTP     sha1     counter 3                969429     969429     PASS
+HOTP     sha1     counter 4                338314     338314     PASS
+HOTP     sha1     counter 5                254676     254676     PASS
+HOTP     sha1     counter 6                287922     287922     PASS
+HOTP     sha1     counter 7                162583     162583     PASS
+HOTP     sha1     counter 8                399871     399871     PASS
+HOTP     sha1     counter 9                520489     520489     PASS
+TOTP     sha1     t=59 digits=8            94287082   94287082   PASS
+TOTP     sha256   t=59 digits=8            46119246   46119246   PASS
+TOTP     sha512   t=59 digits=8            90693936   90693936   PASS
+TOTP     sha1     t=1111111109 digits=8    07081804   07081804   PASS
+TOTP     sha256   t=1111111109 digits=8    68084774   68084774   PASS
+TOTP     sha512   t=1111111109 digits=8    25091201   25091201   PASS
+TOTP     sha1     t=1111111111 digits=8    14050471   14050471   PASS
+TOTP     sha256   t=1111111111 digits=8    67062674   67062674   PASS
+TOTP     sha512   t=1111111111 digits=8    99943326   99943326   PASS
+TOTP     sha1     t=1234567890 digits=8    89005924   89005924   PASS
+TOTP     sha256   t=1234567890 digits=8    91819424   91819424   PASS
+TOTP     sha512   t=1234567890 digits=8    93441116   93441116   PASS
+TOTP     sha1     t=2000000000 digits=8    69279037   69279037   PASS
+TOTP     sha256   t=2000000000 digits=8    90698825   90698825   PASS
+TOTP     sha512   t=2000000000 digits=8    38618901   38618901   PASS
+TOTP     sha1     t=20000000000 digits=8   65353130   65353130   PASS
+TOTP     sha256   t=20000000000 digits=8   77737706   77737706   PASS
+TOTP     sha512   t=20000000000 digits=8   47863826   47863826   PASS
+TOTP     sha1     t=59 digits=6            287082     287082     PASS
+TOTP     sha1     t=1111111109 digits=6    081804     081804     PASS
+TOTP     sha1     t=1111111111 digits=6    050471     050471     PASS
+TOTP     sha1     t=1234567890 digits=6    005924     005924     PASS
+TOTP     sha1     t=2000000000 digits=6    279037     279037     PASS
+TOTP     sha1     t=20000000000 digits=6   353130     353130     PASS
+All 34 sample test vectors passed.
+
+Choose an option (1-5): 5
+Goodbye.

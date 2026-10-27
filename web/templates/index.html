@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- A class demo should not be indexed as if it were a real login page. -->
+  <meta name="robots" content="noindex">
+  <title>OTP Generator and Verifier</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body
+  data-validity="{{ validity }}"
+  data-lockout="{{ lockout }}"
+  data-digits="{{ digits }}"
+  data-rehearsal="{{ 'yes' if rehearsal else 'no' }}">
+  <header class="site-header">
+    <p class="eyebrow">Classroom lab · not a real login</p>
+    <h1>OTP Generator and Verifier</h1>
+    <p class="lede">
+      Time-bomb auth. A 6-digit code lives for {{ validity }} seconds.
+      Submit it on second {{ validity + 1 }} and this page locks input for {{ lockout }} seconds.
+    </p>
+    <ul class="facts">
+      <li><strong>{{ digits }}</strong> digits</li>
+      <li><strong>{{ validity }}s</strong> demo window</li>
+      <li><strong>{{ lockout }}s</strong> lockout</li>
+      <li><strong>{{ totp_step }}s</strong> TOTP step</li>
+    </ul>
+  </header>
+
+  {% if rehearsal %}
+  <p class="rehearsal" role="alert">
+    REHEARSAL MODE. Submission screenshots need the default 30-second window
+    and 60-second lockout. Unset OTP_VALIDITY_SECONDS and OTP_LOCKOUT_SECONDS, then restart.
+  </p>
+  {% endif %}
+
+  <main>
+    <section id="timebomb-card" class="card" aria-labelledby="demo-heading">
+      <h2 id="demo-heading">Demo OTP</h2>
+      <p class="note">
+        The code is on screen on purpose. A production system would send it on
+        another channel and store only a hash.
+      </p>
+      <p id="otp-display" class="otp" aria-live="polite">------</p>
+      <div class="bar-track" aria-hidden="true">
+        <div id="bar-fill" class="bar-fill"></div>
+      </div>
+      <p id="bar-label" class="bar-label">Waiting for a code</p>
+      <p id="bar-hint" class="hint"></p>
+      <p id="lock-banner" class="lock-banner" hidden>LOCKED - input disabled.</p>
+      <form id="demo-form">
+        <label for="otp-input">Enter the OTP</label>
+        <input
+          id="otp-input"
+          name="otp"
+          type="text"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          autocapitalize="off"
+          spellcheck="false"
+          placeholder="6 digits">
+        <div class="actions">
+          <button id="verify-btn" type="submit">Verify OTP</button>
+          <button id="new-btn" type="button">Generate new OTP</button>
+        </div>
+      </form>
+      <p id="attempt-count">Attempts this window: 0</p>
+      <div id="status" class="status" role="status"></div>
+    </section>
+
+    <section class="card" aria-labelledby="rules-heading">
+      <h2 id="rules-heading">Validity rules</h2>
+      <ul>
+        <li>Demo OTP: {{ digits }} digits from a cryptographic generator, valid for {{ validity }} seconds.</li>
+        <li>You may try again while the bar is still moving. A wrong code is a failure, not a lockout.</li>
+        <li>Letters, the wrong length, and empty input are invalid. They do not count as an attempt.</li>
+        <li>At the deadline or later, a right code and a wrong code are both expired. Input locks for {{ lockout }} seconds.</li>
+        <li>The bar is a visualizer. The server clock decides. A refresh does not clear a lock.</li>
+        <li>TOTP (RFC 6238): HMAC-SHA1, {{ totp_step }}-second steps, skew of +/- {{ totp_skew }} step. No lockout.</li>
+        <li>HOTP (RFC 4226): HMAC-SHA1, look-ahead 0. The counter moves only after a correct code.</li>
+      </ul>
+    </section>
+
+    <section class="card" aria-labelledby="totp-heading">
+      <h2 id="totp-heading">Time-based OTP</h2>
+      <p class="note">Public RFC 6238 sample secret <span class="mono">12345678901234567890</span>. Do not use it for a real account.</p>
+      <p id="totp-code" class="otp otp-small">------</p>
+      <p id="totp-left" class="hint">Loading the current step…</p>
+      <form id="totp-form">
+        <label for="totp-input">Enter the TOTP</label>
+        <input id="totp-input" type="text" inputmode="numeric" autocomplete="one-time-code" spellcheck="false" placeholder="6 digits">
+        <button type="submit">Verify TOTP</button>
+      </form>
+      <div id="totp-status" class="status" role="status"></div>
+    </section>
+
+    <section class="card" aria-labelledby="hotp-heading">
+      <h2 id="hotp-heading">Event-based OTP</h2>
+      <p class="note">Same public sample secret. Counter 0 is the RFC vector <span class="mono">755224</span>.</p>
+      <form id="hotp-form">
+        <label for="hotp-counter">Counter</label>
+        <input id="hotp-counter" type="number" min="0" step="1" value="0">
+        <p id="hotp-code" class="otp otp-small">------</p>
+        <label for="hotp-input">Enter the HOTP</label>
+        <input id="hotp-input" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="6 digits">
+        <div class="actions">
+          <button id="hotp-show" type="button">Show code</button>
+          <button type="submit">Verify HOTP</button>
+        </div>
+      </form>
+      <div id="hotp-status" class="status" role="status"></div>
+    </section>
+
+    <section class="card" aria-labelledby="vector-heading">
+      <h2 id="vector-heading">Sample test vectors</h2>
+      <p id="vector-summary" class="hint">Loading vectors…</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Kind</th>
+              <th>Hash</th>
+              <th>Detail</th>
+              <th>Expected</th>
+              <th>Actual</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody id="vector-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>OTP Generator and Verifier · demo only · the console program is <span class="mono">python main.py</span></p>
+  </footer>
+  <noscript>
+    <p class="rehearsal">This page needs JavaScript for the countdown. The console program works without it: python main.py</p>
+  </noscript>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
